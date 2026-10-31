@@ -94,9 +94,73 @@ docker-compose up --build
 
 ---
 
-## 🗄️ Database Migrations
+## ⚡ Deploying to Vercel (Do You Need Supabase?)
 
-Apply the Supabase PostgreSQL migrations located in `supabase/migrations/`:
-1. `supabase/migrations/001_initial_schema.sql` (Creates all 28 tables, pgvector HNSW indexes, and RPC search functions).
-2. `supabase/migrations/002_rls_policies.sql` (Enforces Row Level Security and role-based permissions).
-3. `supabase/seed/seed.sql` (Populates complete curriculum levels, roadmap nodes, and AI tools).
+### ❓ Do you need Supabase to deploy on Vercel?
+**NO. Supabase is completely optional!**
+
+The platform is engineered with a **Dual-Mode Persistence Architecture**:
+1. **Zero-Configuration Local Resilient Mode (Default)**:
+   - When deployed directly to Vercel without environment variables, the platform automatically activates its built-in browser engine (`localStorage` & `IndexedDB`).
+   - All administrator actions, student login creation, progress tracking, coding sandboxes, quizzes, and project evaluations persist automatically.
+   - You can deploy to Vercel in 60 seconds with **zero external database dependencies**.
+2. **Optional Live Supabase Mode**:
+   - If you later want multi-device synchronization and PostgreSQL pgvector vector search, simply add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to your Vercel Project Settings → Environment Variables.
+
+### 🚀 Deploying to Vercel Steps
+1. Push your project to GitHub (see instructions below).
+2. Go to **[vercel.com](https://vercel.com)** and log in with GitHub.
+3. Click **"Add New..."** → **"Project"**.
+4. Import your `nextgen-learning-platform` repository.
+5. Vercel automatically detects Vite settings from `vercel.json` and `package.json`:
+   - **Framework Preset**: Vite
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+6. Click **"Deploy"**. Your live platform URL is ready in ~45 seconds!
+
+---
+
+## 🐙 Deploying to GitHub (From VS Code or Terminal)
+
+The repository is already initialized with `git` and `.gitignore` configured.
+
+Run these 3 commands to push to your GitHub account:
+
+```bash
+# 1. Add your GitHub repository as remote (replace with your repo URL)
+git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/<YOUR_REPOSITORY_NAME>.git
+
+# 2. Ensure main branch is selected
+git branch -M main
+
+# 3. Push all code to GitHub
+git push -u origin main
+```
+
+---
+
+## 💻 Using in VS Code with the ZIP File
+
+1. Extract `nextgen-learning-platform.zip` to your chosen project folder.
+2. Open VS Code and open the extracted folder (`File` → `Open Folder...`).
+3. Open the integrated terminal (`Ctrl + \`` or `Cmd + \``) and run:
+   ```bash
+   npm install
+   npm run dev
+   ```
+4. Click the local preview link: **`http://localhost:3000`**
+
+---
+
+## 🔑 Default Credentials & Admin Workflows
+
+The platform boots directly into the **Administrative Management Portal**:
+
+- **Admin Login**: `admin@nexuslearn.io`
+- **Admin Password**: `admin123`
+
+### Creating Student Accounts
+1. In the **Admin Portal**, navigate to Section 2: **"Student Logins"**.
+2. Click **"Create Student Account & Login"** to provision a student with their custom password and enrolled track.
+3. The platform generates an instant credentials banner with a **"Copy"** button and **"Test Login As This Student"** button.
+
