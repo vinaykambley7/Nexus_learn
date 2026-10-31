@@ -1,0 +1,39 @@
+services:
+  # 1. Frontend Web Client (React 19 + TypeScript + Vite)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=http://localhost:5000
+      - VITE_AI_SERVICE_URL=http://localhost:8000
+    depends_on:
+      - api-server
+      - ai-service
+
+  # 2. Node.js Express REST API Server
+  api-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - SUPABASE_URL=https://your-project.supabase.co
+      - SUPABASE_ANON_KEY=your-anon-key
+
+  # 3. Python FastAPI AI Microservice
+  ai-service:
+    build:
+      context: ./python-services
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - OPENAI_API_KEY=your-openai-key
