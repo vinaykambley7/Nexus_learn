@@ -163,12 +163,8 @@ export const TopNav: React.FC<TopNavProps> = ({
                   <span>{user.fullName}</span>
                   <ChevronDown className="w-3 h-3 text-text-muted" />
                 </div>
-                <div className="text-[10px] text-text-muted">
-                  {user.role === 'admin' ? (
-                    <span className="text-purple-400 font-medium">Administrator</span>
-                  ) : (
-                    <span className="text-sky-400 font-medium">Student Scholar</span>
-                  )}
+                <div className="text-[10px] text-purple-400 font-medium">
+                  Platform Administrator
                 </div>
               </div>
             </button>
@@ -179,10 +175,21 @@ export const TopNav: React.FC<TopNavProps> = ({
                 <div className="px-3 py-2 border-b border-white/10">
                   <div className="text-xs font-bold text-white">{user.fullName}</div>
                   <div className="text-[11px] text-text-muted font-mono truncate">{user.email}</div>
-                  <Badge variant={user.role === 'admin' ? 'purple' : 'blue'} className="mt-1">
-                    {user.role === 'admin' ? 'Administrator' : 'Student Scholar'}
+                  <Badge variant="purple" className="mt-1">
+                    System Administrator
                   </Badge>
                 </div>
+
+                <button
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    if (onNavigateTab) onNavigateTab('admin');
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 text-left transition-colors"
+                >
+                  <Shield className="w-4 h-4 text-purple-400" />
+                  <span>Admin Management Portal</span>
+                </button>
 
                 <button
                   onClick={() => {
@@ -192,7 +199,7 @@ export const TopNav: React.FC<TopNavProps> = ({
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/10 text-left transition-colors"
                 >
                   <LineChart className="w-4 h-4 text-sky-400" />
-                  <span>My Progress & Portfolio</span>
+                  <span>Cohort Progress Matrix</span>
                 </button>
 
                 <button
@@ -214,22 +221,7 @@ export const TopNav: React.FC<TopNavProps> = ({
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-text-secondary hover:text-white hover:bg-white/10 text-left transition-colors"
                 >
                   <Settings className="w-4 h-4 text-slate-400" />
-                  <span>Profile & Settings</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setShowUserMenu(false);
-                    const nextRole = user.role === 'admin' ? 'student' : 'admin';
-                    switchRole(nextRole);
-                    if (onNavigateTab) {
-                      onNavigateTab(nextRole === 'admin' ? 'admin' : 'dashboard');
-                    }
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 text-left transition-colors border-t border-white/5"
-                >
-                  <Shield className="w-4 h-4 text-purple-400" />
-                  <span>Switch to {user.role === 'admin' ? 'Student Mode' : 'Admin Console'}</span>
+                  <span>Platform & Security Settings</span>
                 </button>
 
                 <button
@@ -241,7 +233,7 @@ export const TopNav: React.FC<TopNavProps> = ({
                   className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 text-left transition-colors border-t border-white/5"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Sign Out / Switch Account</span>
+                  <span>Sign Out</span>
                 </button>
               </div>
             )}
@@ -249,10 +241,10 @@ export const TopNav: React.FC<TopNavProps> = ({
         ) : (
           <button
             onClick={onOpenAuth}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-semibold shadow-md transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-md transition-all"
           >
-            <LogIn className="w-3.5 h-3.5" />
-            <span>Sign In</span>
+            <Shield className="w-3.5 h-3.5" />
+            <span>Admin Sign In</span>
           </button>
         )}
       </div>

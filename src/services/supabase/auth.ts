@@ -33,19 +33,6 @@ const DEFAULT_ADMIN_USER: UserProfile = {
 
 const DEFAULT_DEMO_USERS: UserProfile[] = [
   DEFAULT_ADMIN_USER,
-  {
-    id: 'usr-student-01',
-    email: 'alex.mercer@nexuslearn.io',
-    fullName: 'Alex Mercer',
-    password: 'nexus123',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=128&auto=format&fit=crop&q=80',
-    role: 'student',
-    streakDays: 14,
-    totalHoursLearned: 38.5,
-    dailyGoalMinutes: 45,
-    enrolledTracks: ['full-stack', 'ai-tools', 'ai-engineering'],
-    status: 'Active',
-  }
 ];
 
 export const authService = {
@@ -108,91 +95,29 @@ export const authService = {
       }
     }
 
-    // Local resilient auth verification
+    // Local resilient auth verification (Admin Only)
     const users = this.getStoredUsers();
     const existing = users.find((u) => u.email.toLowerCase() === trimmedEmail);
 
     if (existing) {
+      if (existing.role !== 'admin') {
+        throw new Error('Access denied. Only platform administrators are permitted to log in.');
+      }
       if (existing.status === 'Suspended') {
-        throw new Error('This account has been suspended by an administrator. Please contact support.');
+        throw new Error('This administrator account has been suspended.');
       }
       if (existing.password && _password && existing.password !== _password) {
-        throw new Error('Incorrect password. Please verify your credentials.');
+        throw new Error('Incorrect password. Please verify your administrator credentials.');
       }
       localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(existing));
       return existing;
     }
 
-    // If new user signing in for first time in demo mode, create student record
-    const newUser: UserProfile = {
-      id: `usr-${Date.now().toString(36)}`,
-      email: trimmedEmail,
-      fullName: trimmedEmail.split('@')[0],
-      password: _password || 'nexus123',
-      role: trimmedEmail.includes('admin') ? 'admin' : 'student',
-      streakDays: 1,
-      totalHoursLearned: 0,
-      dailyGoalMinutes: 45,
-      enrolledTracks: ['full-stack'],
-      status: 'Active',
-    };
-
-    users.push(newUser);
-    localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
-    localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(newUser));
-    return newUser;
+    throw new Error('Access denied. Only authorized administrator accounts can sign in.');
   },
 
-  async signUp(email: string, _password: string, fullName: string, role: 'student' | 'admin' = 'student'): Promise<UserProfile> {
-    const trimmedEmail = email.trim().toLowerCase();
-
-    if (isSupabaseConfigured() && supabase) {
-      const { data, error } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password: _password,
-        options: {
-          data: { full_name: fullName, role },
-        },
-      });
-      if (error) throw error;
-      const userProfile: UserProfile = {
-        id: data.user?.id || `usr-${Date.now()}`,
-        email: trimmedEmail,
-        fullName,
-        role,
-        streakDays: 1,
-        totalHoursLearned: 0,
-        dailyGoalMinutes: 45,
-        enrolledTracks: ['full-stack', 'ai-tools'],
-        status: 'Active',
-      };
-      localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(userProfile));
-      return userProfile;
-    }
-
-    // Local resilient signup
-    const users = this.getStoredUsers();
-    const existing = users.find((u) => u.email.toLowerCase() === trimmedEmail);
-    if (existing) {
-      throw new Error('An account with this email address already exists.');
-    }
-
-    const newUser: UserProfile = {
-      id: `usr-${Date.now().toString(36)}`,
-      email: trimmedEmail,
-      fullName,
-      password: _password,
-      role,
-      streakDays: 1,
-      totalHoursLearned: 0,
-      dailyGoalMinutes: 45,
-      enrolledTracks: ['full-stack', 'ai-tools', 'ai-engineering'],
-      status: 'Active',
-    };
-    users.push(newUser);
-    localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
-    localStorage.setItem(CURRENT_SESSION_KEY, JSON.stringify(newUser));
-    return newUser;
+  async signUp(_email: string, _password: string, _fullName: string, _role: 'student' | 'admin' = 'admin'): Promise<UserProfile> {
+    throw new Error('Public registration is disabled. Only the platform administrator can access this system.');
   },
 
   async adminCreateStudent(fullName: string, email: string, password: string, assignedTrack: string): Promise<UserProfile> {

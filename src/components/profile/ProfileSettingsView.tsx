@@ -136,31 +136,26 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({ onNavi
             </Button>
           </form>
 
-          {/* Quick Role Switcher for Pair-Programming & Evaluation */}
-          <div className="p-6 rounded-3xl glass-panel border border-white/10 space-y-3 shadow-xl">
-            <h3 className="text-base font-bold text-white font-heading">
-              Role & Permissions Switcher
-            </h3>
-            <p className="text-xs text-text-secondary">
-              Toggle between Student and Administrator views to evaluate instructor permissions, student management, and grading workflows.
+          {/* Administrator Privileges */}
+          <div className="p-6 rounded-3xl glass-panel border border-purple-500/30 space-y-3 shadow-xl">
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-purple-400" />
+              <h3 className="text-base font-bold text-white font-heading">
+                Administrator Privileges & Scope
+              </h3>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              You are authenticated with full system administrator authority. You have executive permissions over curriculum management, interactive roadmap positioning, frontier AI tools publishing, quiz creation, and capstone submissions.
             </p>
-            <div className="flex items-center gap-3 pt-2">
+            <div className="pt-2">
               <Button
-                variant={user?.role === 'student' ? 'primary' : 'outline'}
+                variant="purple"
                 size="sm"
-                onClick={() => switchRole('student')}
+                onClick={() => onNavigateToAdmin?.()}
+                className="flex items-center gap-2 text-xs"
               >
-                Student View
-              </Button>
-              <Button
-                variant={user?.role === 'admin' ? 'purple' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  switchRole('admin');
-                  onNavigateToAdmin?.();
-                }}
-              >
-                Administrator Console
+                <Shield className="w-4 h-4" />
+                <span>Open Administrator Console</span>
               </Button>
             </div>
           </div>

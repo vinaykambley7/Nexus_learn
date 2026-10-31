@@ -82,44 +82,42 @@ PRACTICAL_PROJECTS.forEach(proj => {
 });
 console.log(`   ✓ Verified ${PRACTICAL_PROJECTS.length} practical capstone projects.`);
 
-// 4. AUDIT AUTH SERVICE & ADMIN STUDENT CREATION
-console.log('4. Auditing Authentication, Password Validation & Admin Student Provisioning...');
+// 4. AUDIT AUTH SERVICE (EXCLUSIVE ADMIN LOGIN)
+console.log('4. Auditing Exclusive Administrator Authentication & Security Verification...');
 const { authService } = await import('../src/services/supabase/auth.ts');
-
-// Test default student sign in
-const studentSession = await authService.signIn('alex.mercer@nexuslearn.io', 'nexus123');
-assert.equal(studentSession.email, 'alex.mercer@nexuslearn.io');
-assert.equal(studentSession.role, 'student');
 
 // Test default admin sign in
 const adminSession = await authService.signIn('admin@nexuslearn.io', 'admin123');
 assert.equal(adminSession.email, 'admin@nexuslearn.io');
 assert.equal(adminSession.role, 'admin');
 
-// Test password failure
+// Test password failure on admin
 await assert.rejects(
   async () => {
-    await authService.signIn('alex.mercer@nexuslearn.io', 'wrong_pass');
+    await authService.signIn('admin@nexuslearn.io', 'wrong_pass');
   },
   /Incorrect password/,
   'Must reject incorrect password'
 );
 
-// Test Admin Creating a New Student Account with explicit login credentials
-const newStudent = await authService.adminCreateStudent(
-  'Priya Sharma',
-  'priya.sharma@nexuslearn.io',
-  'passcode2026',
-  'AI Engineering & Generative AI'
+// Test rejection of non-admin logins (Exclusive Admin Only)
+await assert.rejects(
+  async () => {
+    await authService.signIn('alex.mercer@nexuslearn.io', 'nexus123');
+  },
+  /Access denied/,
+  'Must reject non-admin logins'
 );
-assert.equal(newStudent.email, 'priya.sharma@nexuslearn.io');
-assert.equal(newStudent.role, 'student');
 
-// Test that the newly created student can immediately log in with their created credentials
-const newStudentSession = await authService.signIn('priya.sharma@nexuslearn.io', 'passcode2026');
-assert.equal(newStudentSession.email, 'priya.sharma@nexuslearn.io');
-assert.equal(newStudentSession.fullName, 'Priya Sharma');
-console.log('   ✓ Verified admin student creation and immediate credential login.');
+// Test rejection of public student registration
+await assert.rejects(
+  async () => {
+    await authService.signUp('random@test.com', 'pass123', 'Random User');
+  },
+  /Public registration is disabled/,
+  'Must reject public registration'
+);
+console.log('   ✓ Verified exclusive administrator authentication and security enforcement.');
 
 // 5. AUDIT PROGRESS & SUBMISSIONS ENGINE
 console.log('5. Auditing Progress Persistence & Instructor Grading...');
