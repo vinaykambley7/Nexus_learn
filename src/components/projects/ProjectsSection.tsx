@@ -65,8 +65,8 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
       onSubmitProject({
         projectId: activeProjectModal.id,
         projectTitle: activeProjectModal.title,
-        studentName: user?.fullName || 'Alex Mercer',
-        studentEmail: user?.email || 'alex.mercer@nexuslearn.io',
+        studentName: user?.fullName || 'NexusAdmin',
+        studentEmail: user?.email || 'admin@nexuslearn.io',
         githubRepoUrl: githubUrl,
         liveUrl: liveUrl || undefined,
         notes,

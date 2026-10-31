@@ -1,49 +1,35 @@
 import { StudentProgress, ProjectSubmission } from '@/types';
 
-const PROGRESS_STORAGE_KEY = 'nexus_student_progress_v1';
-const SUBMISSIONS_STORAGE_KEY = 'nexus_project_submissions_v1';
+const PROGRESS_STORAGE_KEY = 'nexus_student_progress_v2';
+const SUBMISSIONS_STORAGE_KEY = 'nexus_project_submissions_v2';
 
 export const INITIAL_STUDENT_PROGRESS: StudentProgress = {
-  userId: 'usr-student-demo-01',
-  completedNodeIds: ['mod-html', 'mod-css', 'mod-chatgpt-mastery', 'mod-python-math'],
-  inProgressNodeIds: ['mod-js', 'mod-claude-gemini', 'mod-scikit-learn'],
-  completedLessonIds: ['les-html-1', 'les-css-1', 'les-gpt-1', 'les-py-1'],
+  userId: 'usr-admin-01',
+  completedNodeIds: [],
+  inProgressNodeIds: [],
+  completedLessonIds: [],
   completedProjectIds: [],
-  savedToolIds: ['tool-chatgpt', 'tool-claude', 'tool-cursor', 'tool-perplexity'],
-  quizScores: {
-    'quiz-html': { score: 100, passed: true, completedAt: '2026-10-28T14:22:00Z' },
-  },
-  learningStreakDays: 14,
-  totalHoursLearned: 38,
+  savedToolIds: [],
+  quizScores: {},
+  learningStreakDays: 0,
+  totalHoursLearned: 0,
   lastActiveDate: new Date().toISOString().split('T')[0],
 };
 
-export const INITIAL_SUBMISSIONS: ProjectSubmission[] = [
-  {
-    id: 'sub-001',
-    projectId: 'proj-fs-1',
-    projectTitle: 'Enterprise Authentication & Multi-Tenant RBAC',
-    studentName: 'Alex Mercer',
-    studentEmail: 'alex.mercer@nexuslearn.io',
-    githubRepoUrl: 'https://github.com/alexmercer/enterprise-auth-service',
-    liveUrl: 'https://auth-demo.nexuslearn.io',
-    notes: 'Implemented argon2 hashing and refresh token rotation with HTTP-only cookies as specified.',
-    submittedAt: '2026-10-25T11:45:00Z',
-    status: 'Approved',
-    adminFeedback: 'Excellent architecture! Clean separation of token rotation logic and high test coverage.',
-    grade: '98 / 100'
-  }
-];
+export const INITIAL_SUBMISSIONS: ProjectSubmission[] = [];
 
 export const progressService = {
   getProgress(): StudentProgress {
     try {
       const data = localStorage.getItem(PROGRESS_STORAGE_KEY);
       if (data) {
-        return JSON.parse(data);
+        const parsed: StudentProgress = JSON.parse(data);
+        if (parsed && Array.isArray(parsed.completedNodeIds)) {
+          return parsed;
+        }
       }
     } catch (e) {
-      console.warn('Failed to load progress from localStorage, using initial demo state', e);
+      console.warn('Failed to load progress from localStorage', e);
     }
     return INITIAL_STUDENT_PROGRESS;
   },
@@ -92,7 +78,19 @@ export const progressService = {
   getSubmissions(): ProjectSubmission[] {
     try {
       const data = localStorage.getItem(SUBMISSIONS_STORAGE_KEY);
-      if (data) return JSON.parse(data);
+      if (data) {
+        let subs: ProjectSubmission[] = JSON.parse(data);
+        if (Array.isArray(subs)) {
+          // Remove any legacy mock submissions from Alex Mercer
+          subs = subs.filter(
+            (s) =>
+              s.studentEmail.toLowerCase() !== 'alex.mercer@nexuslearn.io' &&
+              s.studentName !== 'Alex Mercer'
+          );
+          localStorage.setItem(SUBMISSIONS_STORAGE_KEY, JSON.stringify(subs));
+          return subs;
+        }
+      }
     } catch (e) {
       console.warn('Failed to load submissions', e);
     }
@@ -118,7 +116,7 @@ export const progressService = {
 
   updateSubmissionStatus(id: string, status: ProjectSubmission['status'], feedback?: string, grade?: string): ProjectSubmission[] {
     const subs = this.getSubmissions();
-    const index = subs.findIndex(s => s.id === id);
+    const index = subs.findIndex((s) => s.id === id);
     if (index !== -1) {
       subs[index].status = status;
       if (feedback) subs[index].adminFeedback = feedback;
@@ -130,5 +128,5 @@ export const progressService = {
       }
     }
     return subs;
-  }
+  },
 };

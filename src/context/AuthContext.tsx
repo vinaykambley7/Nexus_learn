@@ -9,6 +9,8 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<void>;
   register: (email: string, pass: string, name: string, role?: 'student' | 'admin') => Promise<void>;
   adminCreateStudent: (name: string, email: string, pass: string, track: string) => Promise<UserProfile>;
+  adminDeleteUser: (id: string) => Promise<void>;
+  adminToggleStatus: (id: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
   switchRole: (role: 'student' | 'admin') => void;
@@ -46,6 +48,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newStudent;
   };
 
+  const adminDeleteUser = async (id: string): Promise<void> => {
+    await authService.adminDeleteUser(id);
+    refreshUsers();
+  };
+
+  const adminToggleStatus = async (id: string): Promise<void> => {
+    await authService.adminToggleStatus(id);
+    refreshUsers();
+  };
+
   const logout = async () => {
     await authService.signOut();
     setUser(null);
@@ -74,6 +86,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         adminCreateStudent,
+        adminDeleteUser,
+        adminToggleStatus,
         logout,
         updateProfile,
         switchRole,

@@ -89,9 +89,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onUpdateSubmission,
   onSwitchToStudentView,
 }) => {
-  const { adminCreateStudent, allUsers, login } = useAuth();
+  const { adminCreateStudent, adminDeleteUser, allUsers, login } = useAuth();
 
-  const [activeSection, setActiveSection] = useState<AdminSection>('overview');
+  const [activeSection, setActiveSection] = useState<AdminSection>('students');
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>(INITIAL_ANNOUNCEMENTS);
   const [studentSearch, setStudentSearch] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -297,7 +297,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="p-6 rounded-3xl glass-card border border-white/10 space-y-2">
               <div className="text-xs text-text-muted font-semibold">Total Registered Learners</div>
-              <div className="text-3xl font-extrabold text-white font-heading">{studentUsers.length * 350 + 20}</div>
+              <div className="text-3xl font-extrabold text-white font-heading">{studentUsers.length}</div>
               <div className="text-xs text-emerald-400">+18% this month</div>
             </div>
             <div className="p-6 rounded-3xl glass-card border border-white/10 space-y-2">
@@ -331,7 +331,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
                 <div>
-                  <strong className="text-white">Capstone Graded:</strong> Alex Mercer submitted Enterprise Authentication. Grade: 98/100 (Approved).
+                  <strong className="text-white">User Engine Ready:</strong> NexusAdmin authenticated. Ready to provision student user accounts.
                 </div>
                 <span className="text-text-muted font-mono">1 hour ago</span>
               </div>

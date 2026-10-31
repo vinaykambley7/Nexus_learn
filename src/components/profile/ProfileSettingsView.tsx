@@ -11,7 +11,7 @@ interface ProfileSettingsViewProps {
 export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({ onNavigateToAdmin }) => {
   const { user, updateProfile, switchRole, supabaseStatus } = useAuth();
 
-  const [fullName, setFullName] = useState(user?.fullName || 'Alex Mercer');
+  const [fullName, setFullName] = useState(user?.fullName || 'NexusAdmin');
   const [dailyGoal, setDailyGoal] = useState<number>(user?.dailyGoalMinutes || 45);
   const [emailNotify, setEmailNotify] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -44,7 +44,7 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({ onNavi
 
           <div className="flex items-center gap-3">
             <Badge variant={user?.role === 'admin' ? 'purple' : 'blue'}>
-              {user?.role === 'admin' ? 'Role: Administrator' : 'Role: Student Scholar'}
+              {user?.role === 'admin' ? 'Role: NexusAdmin' : 'Role: Student Scholar'}
             </Badge>
           </div>
         </div>
@@ -78,7 +78,7 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({ onNavi
                 <input
                   type="email"
                   disabled
-                  value={user?.email || 'alex.mercer@nexuslearn.io'}
+                  value={user?.email || 'admin@nexuslearn.io'}
                   className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/5 text-text-muted text-xs cursor-not-allowed"
                 />
               </div>

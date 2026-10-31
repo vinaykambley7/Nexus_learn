@@ -133,7 +133,7 @@ export const TopNav: React.FC<TopNavProps> = ({
                 </div>
                 <div className="p-2.5 rounded-xl bg-white/5 border border-white/5">
                   <div className="font-semibold text-emerald-400">Capstone Reviewed</div>
-                  <div className="text-text-muted mt-0.5">Alex Mercer: Enterprise Auth graded 98/100.</div>
+                  <div className="text-text-muted mt-0.5">NexusAdmin: Platform initialized and ready for students.</div>
                 </div>
               </div>
             </div>
@@ -164,7 +164,7 @@ export const TopNav: React.FC<TopNavProps> = ({
                   <ChevronDown className="w-3 h-3 text-text-muted" />
                 </div>
                 <div className="text-[10px] text-purple-400 font-medium">
-                  Platform Administrator
+                  {user.role === 'admin' ? 'NexusAdmin' : 'Student Learner'}
                 </div>
               </div>
             </button>
@@ -176,7 +176,7 @@ export const TopNav: React.FC<TopNavProps> = ({
                   <div className="text-xs font-bold text-white">{user.fullName}</div>
                   <div className="text-[11px] text-text-muted font-mono truncate">{user.email}</div>
                   <Badge variant="purple" className="mt-1">
-                    System Administrator
+                    {user.role === 'admin' ? 'NexusAdmin' : 'Student Learner'}
                   </Badge>
                 </div>
 

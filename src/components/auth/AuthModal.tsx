@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Lock, Mail, Shield } from 'lucide-react';
+import { X, Lock, Mail, Shield, Sparkles } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 
@@ -26,7 +26,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       await login(email, password);
       onClose();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Authentication failed. Please verify administrator credentials.');
+      setErrorMsg(err.message || 'Authentication failed. Please verify credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -57,10 +57,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h3 className="text-lg font-bold text-white font-heading">
-                Administrator Sign In
+                Platform Sign In
               </h3>
               <p className="text-xs text-text-muted">
-                Executive Console & Curriculum Management
+                NexusAdmin & Provisioned User Authentication
               </p>
             </div>
           </div>
@@ -79,14 +79,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-text-secondary mb-1">
-              Administrator Email
+              Email Address
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-purple-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="email"
                 required
-                placeholder="admin@nexuslearn.io"
+                placeholder="admin@nexuslearn.io or user email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:outline-none focus:border-purple-400 font-mono"
@@ -96,7 +96,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
           <div>
             <label className="block text-xs font-semibold text-text-secondary mb-1">
-              Administrator Password
+              Password
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-purple-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -119,20 +119,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             className="w-full mt-2 flex items-center justify-center gap-2"
           >
             <Shield className="w-4 h-4" />
-            <span>Sign In to Admin Portal</span>
+            <span>Sign In</span>
           </Button>
         </form>
 
         {/* Quick Admin Auto-Fill */}
-        <div className="pt-2 border-t border-white/10">
+        <div className="pt-2 border-t border-white/10 space-y-2">
           <Button
             variant="outline"
             size="sm"
             onClick={handleQuickAdminLogin}
-            className="w-full text-xs text-purple-300 hover:text-white border-purple-500/30 hover:border-purple-500/60"
+            className="w-full text-xs text-purple-300 hover:text-white border-purple-500/30 hover:border-purple-500/60 flex items-center justify-center gap-1.5"
           >
-            Instant Admin Fill (admin@nexuslearn.io / admin123)
+            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+            <span>Instant NexusAdmin Login (admin@nexuslearn.io / admin123)</span>
           </Button>
+
+          <p className="text-[11px] text-text-muted text-center leading-relaxed">
+            🔒 Public registration is disabled. Student accounts are created and provisioned exclusively by <strong>NexusAdmin</strong>.
+          </p>
         </div>
       </div>
     </div>
