@@ -14,7 +14,8 @@ import {
   Bookmark,
   Settings,
   Shield,
-  ChevronDown
+  ChevronDown,
+  UserPlus
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Badge } from '@/components/ui/Badge';
@@ -100,6 +101,18 @@ export const TopNav: React.FC<TopNavProps> = ({
             Ctrl+K
           </kbd>
         </button>
+
+        {/* Quick Admin Create Student Button */}
+        {user?.role === 'admin' && (
+          <button
+            onClick={() => onNavigateTab?.('admin')}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-[0_0_15px_rgba(168,85,247,0.4)] border border-purple-400/40 transition-all cursor-pointer"
+            title="Go to Student Accounts & Creation"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>➕ Create Student</span>
+          </button>
+        )}
 
         {/* Streak Pill */}
         <div className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-orange-500/15 to-amber-500/15 border border-orange-500/30 text-amber-300 text-sm font-semibold shadow-[0_0_15px_rgba(249,115,22,0.15)]">

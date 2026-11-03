@@ -16,7 +16,8 @@ import {
   Flame,
   ChevronLeft,
   ChevronRight,
-  GraduationCap
+  GraduationCap,
+  UserPlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TrackId } from '@/types';
@@ -179,6 +180,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <Shield className="w-4 h-4 text-purple-400 flex-shrink-0" />
             {!collapsed && <span className="truncate text-left font-semibold">Admin Portal (NexusAdmin)</span>}
+          </button>
+
+          <button
+            onClick={() => onSelectTab('admin')}
+            title={collapsed ? 'Create & Manage Students' : undefined}
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all group relative mt-1',
+              'text-purple-300 hover:text-white hover:bg-purple-500/20 bg-purple-500/10 border border-purple-500/20'
+            )}
+          >
+            <UserPlus className="w-4 h-4 text-purple-400 flex-shrink-0" />
+            {!collapsed && <span className="truncate text-left font-semibold">➕ Create Students</span>}
           </button>
         </div>
       </div>

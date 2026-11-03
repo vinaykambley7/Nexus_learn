@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import {
   Shield,
+  Users,
+  UserPlus,
   BookOpen,
   Award,
   Sparkles,
@@ -12,14 +14,16 @@ import {
   MapPin,
   HelpCircle,
   Briefcase,
-  Layers,
-  Database,
+  Copy,
+  Trash2,
+  LogIn,
+  Search,
   ExternalLink,
-  Code,
-  Terminal,
-  Activity
+  Activity,
+  Key
 } from 'lucide-react';
 import { ProjectSubmission } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { LEARNING_TRACKS } from '@/features/curriculum/curriculumData';
@@ -52,6 +56,7 @@ const INITIAL_ANNOUNCEMENTS: AnnouncementItem[] = [
 ];
 
 type AdminSection =
+  | 'students'
   | 'overview'
   | 'curriculum'
   | 'roadmap'
@@ -67,15 +72,39 @@ interface AdminDashboardProps {
   submissions: ProjectSubmission[];
   onUpdateSubmission: (id: string, status: ProjectSubmission['status'], feedback?: string, grade?: string) => void;
   onSwitchToStudentView?: () => void;
+  initialSection?: 'students' | 'overview';
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   submissions,
   onUpdateSubmission,
+  onSwitchToStudentView,
+  initialSection,
 }) => {
-  const [activeSection, setActiveSection] = useState<AdminSection>('overview');
+  const {
+    adminCreateStudent,
+    adminDeleteStudent,
+    adminToggleStudentStatus,
+    allUsers,
+    login,
+  } = useAuth();
+
+  const [activeSection, setActiveSection] = useState<AdminSection>(initialSection || 'students');
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>(INITIAL_ANNOUNCEMENTS);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Student creation form state
+  const [nameInput, setNameInput] = useState('');
+  const [emailInput, setEmailInput] = useState('');
+  const [passInput, setPassInput] = useState('learn2026');
+  const [trackInput, setTrackInput] = useState('Full-Stack Web Development');
+  const [createdNotice, setCreatedNotice] = useState<{
+    name: string;
+    email: string;
+    pass: string;
+    track: string;
+  } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // New announcement state
   const [newAnnTitle, setNewAnnTitle] = useState('');
@@ -89,6 +118,68 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const studentUsers = allUsers.filter((u) => u.role === 'student');
+
+  const filteredStudents = studentUsers.filter(
+    (s) =>
+      s.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.enrolledTracks.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const handleAddStudent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nameInput.trim() || !emailInput.trim() || !passInput.trim()) return;
+
+    try {
+      const newStudent = await adminCreateStudent(nameInput, emailInput, passInput, trackInput);
+      setCreatedNotice({
+        name: newStudent.fullName,
+        email: newStudent.email,
+        pass: passInput,
+        track: trackInput,
+      });
+      setNameInput('');
+      setEmailInput('');
+      setPassInput('learn2026');
+      showToast(`Student account for "${newStudent.fullName}" created successfully!`);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to create student account');
+    }
+  };
+
+  const handleDeleteStudent = async (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete student account "${name}"?`)) {
+      try {
+        await adminDeleteStudent(id);
+        showToast(`Student account "${name}" has been removed.`);
+      } catch (err: any) {
+        showToast(err.message || 'Failed to delete student');
+      }
+    }
+  };
+
+  const handleToggleStatus = async (id: string) => {
+    try {
+      await adminToggleStudentStatus(id);
+      showToast('Student account status toggled.');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to toggle status');
+    }
+  };
+
+  const handleLoginAsStudent = async (email: string, pass?: string) => {
+    try {
+      await login(email, pass || 'learn2026');
+      showToast(`Switched active session to student "${email}". Redirecting...`);
+      setTimeout(() => {
+        if (onSwitchToStudentView) onSwitchToStudentView();
+      }, 600);
+    } catch (err: any) {
+      showToast(`Login failed: ${err.message}`);
+    }
   };
 
   const handleAddAnnouncement = (e: React.FormEvent) => {
@@ -114,23 +205,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     showToast(`Submission updated to "${status}".`);
   };
 
-  // Compute live node count across all tracks
   const totalNodesCount = LEARNING_TRACKS.reduce(
     (acc, track) => acc + track.levels.reduce((lAcc, lvl) => lAcc + lvl.nodes.length, 0),
     0
   );
 
   const sectionsList: { id: AdminSection; label: string; icon: any }[] = [
-    { id: 'overview', label: '1. Overview & System Health', icon: TrendingUp },
-    { id: 'curriculum', label: '2. Curriculum Architecture', icon: BookOpen },
-    { id: 'roadmap', label: '3. Interactive Roadmaps', icon: MapPin },
-    { id: 'ai-tools', label: '4. Frontier AI Tools', icon: Sparkles },
-    { id: 'content', label: '5. Content Engine', icon: FileText },
-    { id: 'quizzes', label: '6. Quizzes & Exams', icon: HelpCircle },
-    { id: 'assignments', label: '7. Assignments & Exercises', icon: Briefcase },
-    { id: 'projects', label: '8. Capstone Project Reviews', icon: Award },
-    { id: 'announcements', label: '9. Announcements & Broadcasts', icon: Bell },
-    { id: 'settings', label: '10. Audit & Environment Settings', icon: Sliders },
+    { id: 'students', label: '1. Student Accounts & Creation', icon: Users },
+    { id: 'overview', label: '2. Overview & System Health', icon: TrendingUp },
+    { id: 'curriculum', label: '3. Curriculum Architecture', icon: BookOpen },
+    { id: 'roadmap', label: '4. Interactive Roadmaps', icon: MapPin },
+    { id: 'ai-tools', label: '5. Frontier AI Tools', icon: Sparkles },
+    { id: 'content', label: '6. Content Engine', icon: FileText },
+    { id: 'quizzes', label: '7. Quizzes & Exams', icon: HelpCircle },
+    { id: 'assignments', label: '8. Assignments & Exercises', icon: Briefcase },
+    { id: 'projects', label: '9. Capstone Project Reviews', icon: Award },
+    { id: 'announcements', label: '10. Broadcast Announcements', icon: Bell },
+    { id: 'settings', label: '11. Audit & Environment Settings', icon: Sliders },
   ];
 
   return (
@@ -155,18 +246,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               Admin Management Portal
             </h1>
             <p className="text-sm sm:text-base text-text-secondary leading-relaxed">
-              Curriculum architecture, interactive graph roadmaps, frontier AI directory, quizzes, and live database policies managed in real time.
+              Create and provision verified student user accounts, manage curriculum roadmaps, frontier AI directory, quizzes, and live database policies.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="flex h-3 w-3 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-            </span>
-            <span className="text-xs font-mono text-emerald-400 font-semibold">
-              Live Production Console
-            </span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <Button
+              variant="purple"
+              size="md"
+              onClick={() => setActiveSection('students')}
+              className="flex items-center gap-2 shadow-[0_0_20px_rgba(168,85,247,0.5)] border border-purple-400/40 font-bold"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Create Student User</span>
+            </Button>
+            <div className="flex items-center gap-2 bg-black/40 px-3 py-2 rounded-xl border border-white/10">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span className="text-xs font-mono text-emerald-400 font-semibold">
+                Live Console
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -193,32 +295,297 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         })}
       </div>
 
-      {/* SECTION 1: OVERVIEW & SYSTEM HEALTH */}
+      {/* SECTION 1: STUDENT ACCOUNTS & CREATION */}
+      {activeSection === 'students' && (
+        <div className="space-y-6">
+          {/* Section Information Banner */}
+          <div className="p-6 rounded-3xl bg-purple-950/30 border border-purple-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
+            <div className="space-y-1 max-w-2xl">
+              <div className="flex items-center gap-2 text-sm font-bold text-white font-heading">
+                <Shield className="w-4 h-4 text-purple-400" />
+                <span>Student Account Provisioning Center (Admin Exclusive)</span>
+              </div>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Public self-registration is permanently disabled. As <strong>NexusAdmin</strong>, you create student accounts here. Students sign in with the email and password you assign.
+              </p>
+            </div>
+            <Badge variant="purple" size="md">
+              {studentUsers.length} Students Provisioned
+            </Badge>
+          </div>
+
+          {/* Creation Form Card */}
+          <div className="p-6 rounded-3xl glass-panel border border-white/10 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-purple-400" />
+                <h3 className="text-base font-bold text-white font-heading">
+                  Create New Student Account
+                </h3>
+              </div>
+              <span className="text-xs text-text-muted">Fields marked with * are required</span>
+            </div>
+
+            <form onSubmit={handleAddStudent} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">
+                  Student Full Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Maya Patel"
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs placeholder-text-muted focus:outline-none focus:border-purple-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">
+                  Login Email Address *
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. maya@nexuslearn.io"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs placeholder-text-muted focus:outline-none focus:border-purple-400 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">
+                  Login Password *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="learn2026"
+                  value={passInput}
+                  onChange={(e) => setPassInput(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs placeholder-text-muted focus:outline-none focus:border-purple-400 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary mb-1">
+                  Assigned Learning Track *
+                </label>
+                <select
+                  value={trackInput}
+                  onChange={(e) => setTrackInput(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-dark-card border border-white/10 text-white text-xs focus:outline-none focus:border-purple-400"
+                >
+                  <option value="Full-Stack Web Development">Full-Stack Web Development</option>
+                  <option value="AI Tools Mastery">AI Tools Mastery</option>
+                  <option value="AI Engineering & Generative AI">AI Engineering & Generative AI</option>
+                </select>
+              </div>
+
+              <div className="sm:col-span-2 lg:col-span-4 flex justify-end pt-2">
+                <Button
+                  type="submit"
+                  variant="purple"
+                  size="md"
+                  className="flex items-center gap-2 shadow-lg shadow-purple-600/30"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>➕ Create Student Account</span>
+                </Button>
+              </div>
+            </form>
+          </div>
+
+          {/* Success Notice Banner */}
+          {createdNotice && (
+            <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in">
+              <div className="space-y-1">
+                <div className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>Student Account Successfully Created!</span>
+                </div>
+                <div className="text-xs text-text-secondary flex flex-wrap gap-x-4 gap-y-1">
+                  <span>Name: <strong className="text-white">{createdNotice.name}</strong></span>
+                  <span>Email: <strong className="text-white font-mono">{createdNotice.email}</strong></span>
+                  <span>Password: <strong className="text-white font-mono">{createdNotice.pass}</strong></span>
+                  <span>Track: <strong className="text-white">{createdNotice.track}</strong></span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `NexusLearn Login Credentials:\nEmail: ${createdNotice.email}\nPassword: ${createdNotice.pass}\nPlatform URL: http://localhost:3000`
+                    );
+                    showToast('Credentials copied to clipboard!');
+                  }}
+                  className="text-xs flex items-center gap-1"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy</span>
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => handleLoginAsStudent(createdNotice.email, createdNotice.pass)}
+                  className="text-xs flex items-center gap-1"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Login As This Student</span>
+                </Button>
+                <button
+                  onClick={() => setCreatedNotice(null)}
+                  className="p-1 text-text-muted hover:text-white"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Student Roster Table */}
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="relative w-full max-w-sm">
+                <Search className="w-4 h-4 text-sky-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search students by name, email, or track..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-dark-card/80 border border-white/10 text-white text-xs placeholder-text-muted focus:outline-none focus:border-purple-400"
+                />
+              </div>
+
+              <span className="text-xs text-text-muted">
+                Showing <strong>{filteredStudents.length}</strong> of <strong>{studentUsers.length}</strong> created students
+              </span>
+            </div>
+
+            <div className="rounded-3xl glass-panel border border-white/10 overflow-hidden shadow-xl">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 bg-dark-surface/90 text-text-muted">
+                    <th className="p-4">Student Profile</th>
+                    <th className="p-4">Assigned Track</th>
+                    <th className="p-4">Login Password</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4">Created Date</th>
+                    <th className="p-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {filteredStudents.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="p-12 text-center text-text-muted">
+                        <Users className="w-12 h-12 text-purple-400/30 mx-auto mb-3" />
+                        <div className="text-sm font-bold text-white">No Student Accounts Yet</div>
+                        <p className="text-xs text-text-secondary mt-1 max-w-md mx-auto">
+                          The platform starts clean with 0 dummy users. Use the form above to create your first student account.
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredStudents.map((s) => (
+                      <tr key={s.id} className="hover:bg-white/5 transition-colors">
+                        <td className="p-4">
+                          <div className="font-bold text-white flex items-center gap-2">
+                            <span>{s.fullName}</span>
+                          </div>
+                          <div className="text-text-muted text-[11px] font-mono">{s.email}</div>
+                        </td>
+                        <td className="p-4 text-text-secondary capitalize">
+                          {s.enrolledTracks.join(', ')}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2 font-mono text-purple-300">
+                            <span>{s.password || 'learn2026'}</span>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(s.password || 'learn2026');
+                                showToast(`Password for ${s.fullName} copied!`);
+                              }}
+                              className="p-1 hover:text-white text-text-muted transition-colors"
+                              title="Copy Password"
+                            >
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <button
+                            onClick={() => handleToggleStatus(s.id)}
+                            className="cursor-pointer"
+                            title="Click to toggle status"
+                          >
+                            <Badge variant={s.status === 'Suspended' ? 'rose' : 'emerald'}>
+                              {s.status || 'Active'}
+                            </Badge>
+                          </button>
+                        </td>
+                        <td className="p-4 text-text-muted font-mono text-[11px]">
+                          {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'Active'}
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleLoginAsStudent(s.email, s.password)}
+                              className="text-xs flex items-center gap-1"
+                            >
+                              <LogIn className="w-3.5 h-3.5" />
+                              <span>Login as Student</span>
+                            </Button>
+                            <button
+                              onClick={() => handleDeleteStudent(s.id, s.fullName)}
+                              className="p-2 rounded-xl text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                              title="Delete Student Account"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 2: OVERVIEW & SYSTEM HEALTH */}
       {activeSection === 'overview' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="p-6 rounded-3xl glass-card border border-white/10 space-y-2">
-              <div className="text-xs text-text-muted font-semibold">Core Curriculum Tracks</div>
+              <div className="text-xs text-text-muted font-semibold">Active Student Accounts</div>
               <div className="text-3xl font-extrabold text-white font-heading">
+                {studentUsers.length}
+              </div>
+              <div className="text-xs text-purple-400">Created by NexusAdmin</div>
+            </div>
+
+            <div className="p-6 rounded-3xl glass-card border border-white/10 space-y-2">
+              <div className="text-xs text-text-muted font-semibold">Core Curriculum Tracks</div>
+              <div className="text-3xl font-extrabold text-sky-400 font-heading">
                 {LEARNING_TRACKS.length}
               </div>
               <div className="text-xs text-emerald-400">100% Production Ready</div>
             </div>
 
             <div className="p-6 rounded-3xl glass-card border border-white/10 space-y-2">
-              <div className="text-xs text-text-muted font-semibold">Interactive Syllabus Nodes</div>
-              <div className="text-3xl font-extrabold text-sky-400 font-heading">
+              <div className="text-xs text-text-muted font-semibold">Syllabus Learning Nodes</div>
+              <div className="text-3xl font-extrabold text-purple-400 font-heading">
                 {totalNodesCount}
               </div>
-              <div className="text-xs text-text-secondary">Across all 5 mastery tiers</div>
-            </div>
-
-            <div className="p-6 rounded-3xl glass-card border border-white/10 space-y-2">
-              <div className="text-xs text-text-muted font-semibold">Frontier AI Tools Cataloged</div>
-              <div className="text-3xl font-extrabold text-purple-400 font-heading">
-                {AI_TOOLS.length}
-              </div>
-              <div className="text-xs text-emerald-400">With comparative radar scores</div>
+              <div className="text-xs text-text-secondary">Across 5 mastery levels</div>
             </div>
 
             <div className="p-6 rounded-3xl glass-card border border-white/10 space-y-2">
@@ -247,28 +614,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="space-y-2 text-xs">
               <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
                 <div>
+                  <strong className="text-white">User Provisioning:</strong> Admin student account creation engine active.
+                </div>
+                <span className="text-text-muted font-mono">{studentUsers.length} Students</span>
+              </div>
+              <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
+                <div>
                   <strong className="text-white">Curriculum Published:</strong> Level 5 Supabase pgvector RAG module updated with new HNSW indexing lab.
                 </div>
-                <span className="text-text-muted font-mono">Real-Time Active</span>
+                <span className="text-text-muted font-mono">Live</span>
               </div>
               <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
                 <div>
-                  <strong className="text-white">Security & Access:</strong> Single administrator mode active. Unauthorized registrations rejected.
+                  <strong className="text-white">Security & Access:</strong> Public sign-ups disabled. Accounts provisioned exclusively by NexusAdmin.
                 </div>
-                <span className="text-text-muted font-mono">Protected</span>
-              </div>
-              <div className="p-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
-                <div>
-                  <strong className="text-white">AI Tools Directory:</strong> 10 frontier tools cataloged with benchmark comparisons.
-                </div>
-                <span className="text-text-muted font-mono">Verified</span>
+                <span className="text-text-muted font-mono">Enforced</span>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* SECTION 2: CURRICULUM ARCHITECTURE */}
+      {/* SECTION 3: CURRICULUM ARCHITECTURE */}
       {activeSection === 'curriculum' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -291,7 +658,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       )}
 
-      {/* SECTION 3: INTERACTIVE ROADMAPS */}
+      {/* SECTION 4: INTERACTIVE ROADMAPS */}
       {activeSection === 'roadmap' && (
         <div className="p-6 rounded-3xl glass-panel border border-white/10 space-y-4 shadow-xl">
           <div className="flex items-center justify-between">
@@ -316,7 +683,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       )}
 
-      {/* SECTION 4: FRONTIER AI TOOLS */}
+      {/* SECTION 5: FRONTIER AI TOOLS */}
       {activeSection === 'ai-tools' && (
         <div className="space-y-4">
           <div className="rounded-3xl glass-panel border border-white/10 overflow-hidden shadow-xl">
@@ -367,7 +734,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       )}
 
-      {/* SECTION 5, 6 & 7: CONTENT, QUIZZES & ASSIGNMENTS */}
+      {/* SECTION 6, 7 & 8: CONTENT, QUIZZES & ASSIGNMENTS */}
       {(activeSection === 'content' || activeSection === 'quizzes' || activeSection === 'assignments') && (
         <div className="p-6 rounded-3xl glass-panel border border-white/10 space-y-4 shadow-xl">
           <div className="flex items-center justify-between">
@@ -401,7 +768,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       )}
 
-      {/* SECTION 8: CAPSTONE PROJECTS EVALUATION */}
+      {/* SECTION 9: CAPSTONE PROJECTS EVALUATION */}
       {activeSection === 'projects' && (
         <div className="space-y-4">
           <div className="rounded-3xl glass-panel border border-white/10 overflow-hidden shadow-xl">
@@ -557,7 +924,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       )}
 
-      {/* SECTION 9: ANNOUNCEMENTS BROADCAST */}
+      {/* SECTION 10: ANNOUNCEMENTS BROADCAST */}
       {activeSection === 'announcements' && (
         <div className="space-y-6">
           <form onSubmit={handleAddAnnouncement} className="p-6 rounded-3xl glass-panel border border-white/10 space-y-4 shadow-xl">
@@ -604,7 +971,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       )}
 
-      {/* SECTION 10: AUDIT & ENVIRONMENT SETTINGS */}
+      {/* SECTION 11: AUDIT & ENVIRONMENT SETTINGS */}
       {activeSection === 'settings' && (
         <div className="p-6 rounded-3xl glass-panel border border-white/10 space-y-4 shadow-xl">
           <div className="flex items-center justify-between">
@@ -621,13 +988,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <div className="p-5 rounded-2xl bg-white/5 border border-white/10 space-y-3 text-xs text-text-secondary leading-relaxed">
             <p>
-              The platform operates in exclusive administrator mode. Changes made by <strong>NexusAdmin</strong> adhere to Row Level Security policy <code className="text-purple-300">public.is_admin()</code> and persist automatically.
+              The platform operates in exclusive administrator mode. Student accounts are created and provisioned exclusively by <strong>NexusAdmin</strong>. All actions adhere to Row Level Security policy <code className="text-purple-300">public.is_admin()</code> and persist automatically.
             </p>
             <div className="p-4 rounded-xl bg-black/40 border border-white/10 font-mono text-[11px] text-sky-300 space-y-1">
-              <div>• Authentication: Exclusive NexusAdmin (admin@nexuslearn.io)</div>
+              <div>• Administrator: NexusAdmin (admin@nexuslearn.io)</div>
+              <div>• Active Student Accounts: {studentUsers.length} provisioned</div>
               <div>• RLS Policy: public.is_admin() enforced</div>
               <div>• Storage Engine: Local Resilient Mode with Cloud PostgreSQL Sync</div>
-              <div>• Real-Time User Roster: 0 Dummy Records • Single Admin Mode Active</div>
             </div>
           </div>
         </div>

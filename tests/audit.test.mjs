@@ -82,8 +82,8 @@ PRACTICAL_PROJECTS.forEach(proj => {
 });
 console.log(`   ✓ Verified ${PRACTICAL_PROJECTS.length} practical capstone projects.`);
 
-// 4. AUDIT AUTH SERVICE (EXCLUSIVE NEXUSADMIN LOGIN)
-console.log('4. Auditing Exclusive NexusAdmin Authentication & Security Verification...');
+// 4. AUDIT AUTH SERVICE (NEXUSADMIN CREATING STUDENT USERS)
+console.log('4. Auditing NexusAdmin Authentication & Student Account Provisioning...');
 const { authService } = await import('../src/services/supabase/auth.ts');
 
 // Test default admin sign in
@@ -101,21 +101,30 @@ await assert.rejects(
   'Must reject incorrect password'
 );
 
-// Test strict rejection of any non-admin email
-await assert.rejects(
-  async () => {
-    await authService.signIn('user@nexuslearn.io', 'some_pass');
-  },
-  /Access denied/,
-  'Must reject non-admin logins'
+// Test NexusAdmin creating a new student account
+const newStudent = await authService.adminCreateStudent(
+  'Maya Patel',
+  'maya@nexuslearn.io',
+  'learn2026',
+  'Full-Stack Web Development'
 );
+assert.equal(newStudent.email, 'maya@nexuslearn.io');
+assert.equal(newStudent.fullName, 'Maya Patel');
+assert.equal(newStudent.role, 'student');
 
+// Test that the newly created student CAN log in with their assigned credentials
+const studentSession = await authService.signIn('maya@nexuslearn.io', 'learn2026');
+assert.equal(studentSession.email, 'maya@nexuslearn.io');
+assert.equal(studentSession.fullName, 'Maya Patel');
+assert.equal(studentSession.role, 'student');
+
+// Test rejection of any unprovisioned email
 await assert.rejects(
   async () => {
-    await authService.signIn('student@example.com', 'some_pass');
+    await authService.signIn('unregistered@test.com', 'some_pass');
   },
-  /Access denied/,
-  'Must reject non-admin logins'
+  /Account not found/,
+  'Must reject unprovisioned accounts'
 );
 
 // Test rejection of public student registration
@@ -123,17 +132,16 @@ await assert.rejects(
   async () => {
     await authService.signUp('random@test.com', 'pass123', 'Random User');
   },
-  /Public registration is disabled/,
-  'Must reject public registration'
+  /Public self-registration is disabled/,
+  'Must reject public self-registration'
 );
 
-// Verify that stored users roster contains ONLY NexusAdmin (0 dummy users)
-const users = authService.getStoredUsers();
-assert.equal(users.length, 1, 'Only NexusAdmin exists in user database');
-assert.equal(users[0].fullName, 'NexusAdmin');
-assert.equal(users[0].email, 'admin@nexuslearn.io');
+// Test NexusAdmin deleting the created student
+await authService.adminDeleteStudent(newStudent.id);
+const storedAfterDelete = authService.getStoredUsers();
+assert.equal(storedAfterDelete.some(u => u.id === newStudent.id), false, 'Student deleted successfully');
 
-console.log('   ✓ Verified exclusive NexusAdmin authentication, zero dummy user data, and security enforcement.');
+console.log('   ✓ Verified NexusAdmin authority, student account creation, credential login, and deletion.');
 
 // 5. AUDIT PROGRESS & SUBMISSIONS ENGINE
 console.log('5. Auditing Progress Persistence & Instructor Grading...');
