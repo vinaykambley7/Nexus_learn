@@ -145,7 +145,7 @@ export function App() {
         streakDays={progress.learningStreakDays}
         isAdmin={isAdmin}
         onToggleAdmin={() => {
-          const nextRole = isAdmin ? 'student' : 'admin';
+          const nextRole = 'admin';
           switchRole(nextRole);
           if (nextRole === 'admin') {
             setCurrentTab('admin');

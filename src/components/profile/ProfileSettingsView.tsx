@@ -44,7 +44,7 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({ onNavi
 
           <div className="flex items-center gap-3">
             <Badge variant={user?.role === 'admin' ? 'purple' : 'blue'}>
-              {user?.role === 'admin' ? 'Role: NexusAdmin' : 'Role: Student Scholar'}
+              Role: NexusAdmin
             </Badge>
           </div>
         </div>

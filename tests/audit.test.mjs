@@ -82,8 +82,8 @@ PRACTICAL_PROJECTS.forEach(proj => {
 });
 console.log(`   ✓ Verified ${PRACTICAL_PROJECTS.length} practical capstone projects.`);
 
-// 4. AUDIT AUTH SERVICE (EXCLUSIVE NEXUSADMIN LOGIN & STUDENT PROVISIONING)
-console.log('4. Auditing Exclusive NexusAdmin Authentication & Student Account Provisioning...');
+// 4. AUDIT AUTH SERVICE (EXCLUSIVE NEXUSADMIN LOGIN)
+console.log('4. Auditing Exclusive NexusAdmin Authentication & Security Verification...');
 const { authService } = await import('../src/services/supabase/auth.ts');
 
 // Test default admin sign in
@@ -101,30 +101,21 @@ await assert.rejects(
   'Must reject incorrect password'
 );
 
-// Test NexusAdmin creating a new student account with custom credentials
-const newStudent = await authService.adminCreateStudent(
-  'Aarav Sharma',
-  'aarav.sharma@nexuslearn.io',
-  'aarav2026',
-  'Full-Stack Web Development'
-);
-assert.equal(newStudent.email, 'aarav.sharma@nexuslearn.io');
-assert.equal(newStudent.fullName, 'Aarav Sharma');
-assert.equal(newStudent.role, 'student');
-
-// Test that provisioned student CAN immediately log in with their created credentials
-const studentSession = await authService.signIn('aarav.sharma@nexuslearn.io', 'aarav2026');
-assert.equal(studentSession.email, 'aarav.sharma@nexuslearn.io');
-assert.equal(studentSession.fullName, 'Aarav Sharma');
-assert.equal(studentSession.role, 'student');
-
-// Test rejection of non-provisioned accounts
+// Test strict rejection of any non-admin email
 await assert.rejects(
   async () => {
-    await authService.signIn('unregistered@test.com', 'pass123');
+    await authService.signIn('user@nexuslearn.io', 'some_pass');
   },
-  /not found/i,
-  'Must reject non-provisioned accounts'
+  /Access denied/,
+  'Must reject non-admin logins'
+);
+
+await assert.rejects(
+  async () => {
+    await authService.signIn('student@example.com', 'some_pass');
+  },
+  /Access denied/,
+  'Must reject non-admin logins'
 );
 
 // Test rejection of public student registration
@@ -135,7 +126,14 @@ await assert.rejects(
   /Public registration is disabled/,
   'Must reject public registration'
 );
-console.log('   ✓ Verified NexusAdmin authority, student account creation, and credential login.');
+
+// Verify that stored users roster contains ONLY NexusAdmin (0 dummy users)
+const users = authService.getStoredUsers();
+assert.equal(users.length, 1, 'Only NexusAdmin exists in user database');
+assert.equal(users[0].fullName, 'NexusAdmin');
+assert.equal(users[0].email, 'admin@nexuslearn.io');
+
+console.log('   ✓ Verified exclusive NexusAdmin authentication, zero dummy user data, and security enforcement.');
 
 // 5. AUDIT PROGRESS & SUBMISSIONS ENGINE
 console.log('5. Auditing Progress Persistence & Instructor Grading...');
@@ -153,9 +151,9 @@ assert.ok(updatedProgress.completedNodeIds.includes('mod-react19'), 'Module mark
 const submission = progressService.addSubmission({
   projectId: 'proj-fs-1',
   projectTitle: 'Enterprise Authentication & Multi-Tenant RBAC',
-  studentName: 'Aarav Sharma',
-  studentEmail: 'aarav.sharma@nexuslearn.io',
-  githubRepoUrl: 'https://github.com/aaravsharma/auth-service',
+  studentName: 'NexusAdmin',
+  studentEmail: 'admin@nexuslearn.io',
+  githubRepoUrl: 'https://github.com/nexuslearn/enterprise-auth',
   notes: 'Completed with JWT rotation and rate limiting',
 });
 assert.equal(submission.status, 'Pending Review');
@@ -170,6 +168,6 @@ const gradedList = progressService.updateSubmissionStatus(
 const gradedSub = gradedList.find(s => s.id === submission.id);
 assert.equal(gradedSub.status, 'Approved');
 assert.equal(gradedSub.grade, '99 / 100');
-console.log('   ✓ Verified student project submission and instructor evaluation flow.');
+console.log('   ✓ Verified project submission and instructor evaluation flow.');
 
 console.log('\n--- 🎉 ALL 5 AUDIT DOMAINS PASSED 100% CLEANLY! ---');

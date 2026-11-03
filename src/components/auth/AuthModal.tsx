@@ -26,7 +26,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       await login(email, password);
       onClose();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Authentication failed. Please verify credentials.');
+      setErrorMsg(err.message || 'Authentication failed. Please verify administrator credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -57,10 +57,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h3 className="text-lg font-bold text-white font-heading">
-                Platform Sign In
+                NexusAdmin Login
               </h3>
               <p className="text-xs text-text-muted">
-                NexusAdmin & Provisioned User Authentication
+                Restricted Access • Administrator Console
               </p>
             </div>
           </div>
@@ -79,14 +79,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-text-secondary mb-1">
-              Email Address
+              Administrator Email
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-purple-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="email"
                 required
-                placeholder="admin@nexuslearn.io or user email"
+                placeholder="admin@nexuslearn.io"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:outline-none focus:border-purple-400 font-mono"
@@ -96,7 +96,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
           <div>
             <label className="block text-xs font-semibold text-text-secondary mb-1">
-              Password
+              Administrator Password
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-purple-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -119,7 +119,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             className="w-full mt-2 flex items-center justify-center gap-2"
           >
             <Shield className="w-4 h-4" />
-            <span>Sign In</span>
+            <span>Sign In as NexusAdmin</span>
           </Button>
         </form>
 
@@ -136,7 +136,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </Button>
 
           <p className="text-[11px] text-text-muted text-center leading-relaxed">
-            🔒 Public registration is disabled. Student accounts are created and provisioned exclusively by <strong>NexusAdmin</strong>.
+            🔒 Production Restricted: This platform is exclusively accessible to <strong>NexusAdmin</strong>.
           </p>
         </div>
       </div>

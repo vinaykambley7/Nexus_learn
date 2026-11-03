@@ -178,7 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           >
             <Shield className="w-4 h-4 text-purple-400 flex-shrink-0" />
-            {!collapsed && <span className="truncate text-left font-semibold">Admin Portal (12 Sections)</span>}
+            {!collapsed && <span className="truncate text-left font-semibold">Admin Portal (NexusAdmin)</span>}
           </button>
         </div>
       </div>
