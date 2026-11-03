@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import {
   Shield,
+  Pencil,
+  X,
   Users,
   UserPlus,
   BookOpen,
@@ -23,6 +25,7 @@ import {
   Key
 } from 'lucide-react';
 import { ProjectSubmission } from '@/types';
+import { UserProfile } from '@/services/supabase/auth';
 import { useAuth } from '@/context/AuthContext';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -72,6 +75,7 @@ interface AdminDashboardProps {
   submissions: ProjectSubmission[];
   onUpdateSubmission: (id: string, status: ProjectSubmission['status'], feedback?: string, grade?: string) => void;
   onSwitchToStudentView?: () => void;
+  onOpenCreateStudent?: () => void;
   initialSection?: 'students' | 'overview';
 }
 
@@ -79,12 +83,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   submissions,
   onUpdateSubmission,
   onSwitchToStudentView,
+  onOpenCreateStudent,
   initialSection,
 }) => {
   const {
     adminCreateStudent,
     adminDeleteStudent,
     adminToggleStudentStatus,
+    adminUpdateStudent,
     allUsers,
     login,
   } = useAuth();
@@ -92,6 +98,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [activeSection, setActiveSection] = useState<AdminSection>(initialSection || 'students');
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>(INITIAL_ANNOUNCEMENTS);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // Student editing modal state
+  const [editingStudent, setEditingStudent] = useState<UserProfile | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editPass, setEditPass] = useState('');
+  const [editTrack, setEditTrack] = useState('Full-Stack Web Development');
+  const [editStatus, setEditStatus] = useState<'Active' | 'Suspended'>('Active');
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    try {
+      await adminUpdateStudent(editingStudent.id, {
+        fullName: editName.trim(),
+        password: editPass.trim(),
+        enrolledTracks: [editTrack],
+        status: editStatus,
+      });
+      setEditingStudent(null);
+      showToast(`Student account "${editName}" updated successfully.`);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update student');
+    }
+  };
+
 
   // Student creation form state
   const [nameInput, setNameInput] = useState('');
@@ -254,7 +284,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <Button
               variant="purple"
               size="md"
-              onClick={() => setActiveSection('students')}
+              onClick={() => { if (onOpenCreateStudent) { onOpenCreateStudent(); } else { setActiveSection('students'); } }}
               className="flex items-center gap-2 shadow-[0_0_20px_rgba(168,85,247,0.5)] border border-purple-400/40 font-bold"
             >
               <UserPlus className="w-4 h-4" />
@@ -541,7 +571,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <LogIn className="w-3.5 h-3.5" />
                               <span>Login as Student</span>
                             </Button>
-                            <button
+                                                        <button
+                              onClick={() => {
+                                setEditingStudent(s);
+                                setEditName(s.fullName);
+                                setEditPass(s.password || 'learn2026');
+                                setEditTrack(s.enrolledTracks[0] || 'Full-Stack Web Development');
+                                setEditStatus((s.status as 'Active' | 'Suspended') || 'Active');
+                              }}
+                              className="p-2 rounded-xl text-text-muted hover:text-sky-400 hover:bg-sky-500/10 transition-colors"
+                              title="Edit Student Account"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+<button
                               onClick={() => handleDeleteStudent(s.id, s.fullName)}
                               className="p-2 rounded-xl text-text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                               title="Delete Student Account"
@@ -557,6 +600,94 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </table>
             </div>
           </div>
+          {/* Edit Student Modal */}
+          {editingStudent && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-md" onClick={() => setEditingStudent(null)} />
+              <div className="relative w-full max-w-lg glass-panel rounded-3xl border border-sky-500/30 shadow-2xl p-6 z-10 space-y-5 animate-in zoom-in-95">
+                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <Pencil className="w-5 h-5 text-sky-400" />
+                    <h3 className="text-base font-bold text-white font-heading">
+                      Edit Student: {editingStudent.fullName}
+                    </h3>
+                  </div>
+                  <button onClick={() => setEditingStudent(null)} className="p-1 rounded-lg hover:bg-white/10 text-text-muted hover:text-white">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveEdit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1">Student Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs focus:outline-none focus:border-sky-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1">Email Address (System ID)</label>
+                    <input
+                      type="text"
+                      disabled
+                      value={editingStudent.email}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-text-muted text-xs font-mono cursor-not-allowed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1">Student Password *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editPass}
+                      onChange={(e) => setEditPass(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-black/40 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-sky-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1">Assigned Learning Track *</label>
+                    <select
+                      value={editTrack}
+                      onChange={(e) => setEditTrack(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-dark-card border border-white/10 text-white text-xs focus:outline-none focus:border-sky-400"
+                    >
+                      <option value="Full-Stack Web Development">Full-Stack Web Development</option>
+                      <option value="AI Tools Mastery">AI Tools Mastery</option>
+                      <option value="AI Engineering & Generative AI">AI Engineering & Generative AI</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-text-secondary mb-1">Account Status</label>
+                    <select
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value as 'Active' | 'Suspended')}
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-dark-card border border-white/10 text-white text-xs focus:outline-none focus:border-sky-400"
+                    >
+                      <option value="Active">Active (Permitted Login)</option>
+                      <option value="Suspended">Suspended (Blocked Login)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
+                    <Button variant="outline" size="sm" type="button" onClick={() => setEditingStudent(null)}>
+                      Cancel
+                    </Button>
+                    <Button variant="primary" size="sm" type="submit">
+                      Save Changes
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
         </div>
       )}
 

@@ -195,6 +195,20 @@ export const authService = {
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
   },
 
+  async adminUpdateStudent(id: string, updates: Partial<UserProfile>): Promise<UserProfile> {
+    const users = this.getStoredUsers();
+    const index = users.findIndex((u) => u.id === id);
+    if (index === -1) throw new Error('Student account not found');
+
+    users[index] = {
+      ...users[index],
+      ...updates,
+      role: 'student',
+    };
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    return users[index];
+  },
+
   async adminToggleStudentStatus(id: string): Promise<UserProfile[]> {
     const users = this.getStoredUsers().map((u) => {
       if (u.id === id) {

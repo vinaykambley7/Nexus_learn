@@ -28,6 +28,7 @@ interface TopNavProps {
   onOpenSearch: () => void;
   onOpenProfile: () => void;
   onOpenAuth: () => void;
+  onOpenCreateStudent?: () => void;
   onNavigateTab?: (tab: NavItem) => void;
   title: string;
 }
@@ -39,6 +40,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   onOpenSearch,
   onOpenProfile,
   onOpenAuth,
+  onOpenCreateStudent,
   onNavigateTab,
   title,
 }) => {
@@ -105,9 +107,15 @@ export const TopNav: React.FC<TopNavProps> = ({
         {/* Quick Admin Create Student Button */}
         {user?.role === 'admin' && (
           <button
-            onClick={() => onNavigateTab?.('admin')}
+            onClick={() => {
+              if (onOpenCreateStudent) {
+                onOpenCreateStudent();
+              } else if (onNavigateTab) {
+                onNavigateTab('admin');
+              }
+            }}
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-[0_0_15px_rgba(168,85,247,0.4)] border border-purple-400/40 transition-all cursor-pointer"
-            title="Go to Student Accounts & Creation"
+            title="Create New Student Account"
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>➕ Create Student</span>
@@ -177,7 +185,7 @@ export const TopNav: React.FC<TopNavProps> = ({
                   <ChevronDown className="w-3 h-3 text-text-muted" />
                 </div>
                 <div className="text-[10px] text-purple-400 font-medium">
-                  NexusAdmin
+                  {user.role === 'admin' ? 'NexusAdmin' : 'Student Account'}
                 </div>
               </div>
             </button>
@@ -188,21 +196,40 @@ export const TopNav: React.FC<TopNavProps> = ({
                 <div className="px-3 py-2 border-b border-white/10">
                   <div className="text-xs font-bold text-white">{user.fullName}</div>
                   <div className="text-[11px] text-text-muted font-mono truncate">{user.email}</div>
-                  <Badge variant="purple" className="mt-1">
-                    NexusAdmin
+                  <Badge variant={user.role === 'admin' ? 'purple' : 'emerald'} className="mt-1">
+                    {user.role === 'admin' ? 'NexusAdmin' : 'Student'}
                   </Badge>
                 </div>
 
-                <button
-                  onClick={() => {
-                    setShowUserMenu(false);
-                    if (onNavigateTab) onNavigateTab('admin');
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 text-left transition-colors"
-                >
-                  <Shield className="w-4 h-4 text-purple-400" />
-                  <span>Admin Management Portal</span>
-                </button>
+                {user.role === 'admin' && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        if (onOpenCreateStudent) {
+                          onOpenCreateStudent();
+                        } else if (onNavigateTab) {
+                          onNavigateTab('admin');
+                        }
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 text-left transition-colors font-semibold"
+                    >
+                      <UserPlus className="w-4 h-4 text-purple-400" />
+                      <span>➕ Create Student</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        if (onNavigateTab) onNavigateTab('admin');
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 text-left transition-colors"
+                    >
+                      <Shield className="w-4 h-4 text-purple-400" />
+                      <span>Admin Management Portal</span>
+                    </button>
+                  </>
+                )}
 
                 <button
                   onClick={() => {

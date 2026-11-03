@@ -17,6 +17,8 @@ import { StudentProgressView } from '@/components/progress/StudentProgressView';
 import { BookmarksNotesView } from '@/components/notes/BookmarksNotesView';
 import { ProfileSettingsView } from '@/components/profile/ProfileSettingsView';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { CreateStudentModal } from '@/components/admin/CreateStudentModal';
+import { Shield } from 'lucide-react';
 import { LearningModuleModal } from '@/components/learning/LearningModuleModal';
 
 import { LEARNING_TRACKS } from '@/features/curriculum/curriculumData';
@@ -25,7 +27,8 @@ import { useAuth } from '@/context/AuthContext';
 import { StudentProgress, ProjectSubmission, TrackId, RoadmapNode, AITool, ProjectLab } from '@/types';
 
 export function App() {
-  const { user, isAdmin, switchRole } = useAuth();
+  const { user, isAdmin, switchRole, login } = useAuth();
+  const [isCreateStudentOpen, setIsCreateStudentOpen] = useState<boolean>(false);
 
   const [currentTab, setCurrentTab] = useState<NavItem>('admin');
   const [activeTrackId, setActiveTrackId] = useState<TrackId>('full-stack');
@@ -101,6 +104,15 @@ export function App() {
     }
   };
 
+
+  const handleLoginAsStudent = async (email: string, pass: string) => {
+    try {
+      await login(email, pass);
+      setCurrentTab('dashboard');
+    } catch (err: any) {
+      alert(`Student login failed: ${err.message}`);
+    }
+  };
   const getPageTitle = () => {
     switch (currentTab) {
       case 'dashboard':
